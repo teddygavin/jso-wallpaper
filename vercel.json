@@ -1,0 +1,23 @@
+{
+  "version": 2,
+  "buildCommand": "node lib/seed.js",
+  "routes": [
+    { "src": "/api/products(.*)",   "dest": "/api/products.js"   },
+    { "src": "/api/categories(.*)", "dest": "/api/categories.js" },
+    { "src": "/api/enquiries(.*)",  "dest": "/api/enquiries.js"  },
+    { "src": "/api/upload",         "dest": "/api/upload.js"     },
+    { "src": "/sitemap.xml",        "dest": "/api/sitemap.js"    },
+    { "src": "/robots.txt",         "dest": "/api/robots.js"     },
+    { "src": "/(.*)",               "dest": "/public/$1"         }
+  ],
+  "env": {
+    "POSTGRES_URL":              "@postgres_url",
+    "CLOUDINARY_CLOUD_NAME":     "@cloudinary_cloud_name",
+    "CLOUDINARY_API_KEY":        "@cloudinary_api_key",
+    "CLOUDINARY_API_SECRET":     "@cloudinary_api_secret",
+    "ADMIN_PASSWORD":            "@admin_password",
+    "EMAIL_USER":                "@email_user",
+    "EMAIL_PASS":                "@email_pass",
+    "EMAIL_TO":                  "@email_to"
+  }
+}
