@@ -1,0 +1,20 @@
+backend:
+  name: git-gateway
+  branch: main 
+
+# This links your Cloudinary account to the "Upload" button
+media_library:
+  name: cloudinary
+  config:
+    cloud_name: daq6eymrg
+    api_key: 948764681559925
+
+collections:
+  - name: "window-films"
+    label: "Window Films"
+    folder: "content/window-films"
+    create: true
+    fields:
+      - {label: "Title", name: "title", widget: "string"}
+      - {label: "Product Image", name: "image", widget: "image"}
+      - {label: "Description", name: "body", widget: "markdown"}
