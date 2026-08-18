@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "buildCommand": "node lib/seed.js",
+  "buildCommand": "node lib/setup.js",
   "routes": [
     { "src": "/api/products(.*)",   "dest": "/api/products.js"   },
     { "src": "/api/categories(.*)", "dest": "/api/categories.js" },
