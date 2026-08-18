@@ -61,7 +61,7 @@
         {"@type":"Offer","itemOffered":{"@type":"Product","name":"Carpet Grass Nairobi"}},
         {"@type":"Offer","itemOffered":{"@type":"Product","name":"Artificial Fence & Plants Nairobi"}},
         {"@type":"Offer","itemOffered":{"@type":"Product","name":"Carpets Nairobi"}},
-        {"@type":"Offer","itemOffered":{"@type":"Product","name":"Décor Books Nairobi"}},
+        {"@type":"Offer","itemOffered":{"@type":"Product","name":"Window Blinds Nairobi"}},
         {"@type":"Offer","itemOffered":{"@type":"Product","name":"Décor Pieces & Accessories Nairobi"}},
         {"@type":"Offer","itemOffered":{"@type":"Product","name":"Household Items Nairobi"}},
         {"@type":"Offer","itemOffered":{"@type":"Product","name":"Premium Bedsheets & Towels Nairobi"}},
@@ -454,7 +454,7 @@
       <button class="cat-tab" data-cat="carpet-grass">🌿 Carpet Grass</button>
       <button class="cat-tab" data-cat="artificial-fence-plants">🌱 Artificial Fence &amp; Plants</button>
       <button class="cat-tab" data-cat="carpets">🧶 Carpets</button>
-      <button class="cat-tab" data-cat="decor-books">📚 Décor Books</button>
+      <button class="cat-tab" data-cat="window-blinds">🪟 Window Blinds</button>
       <button class="cat-tab" data-cat="decor-pieces">🏺 Décor Pieces</button>
       <button class="cat-tab" data-cat="household-items">🏠 Household Items</button>
       <button class="cat-tab" data-cat="bedsheets-towels">🛏️ Bedsheets &amp; Towels</button>
@@ -568,7 +568,7 @@
           <option>Carpet Grass</option>
           <option>Artificial Fence &amp; Plants</option>
           <option>Carpets</option>
-          <option>Décor Books</option>
+          <option>Window Blinds</option>
           <option>Décor Pieces &amp; Accessories</option>
           <option>Household Items</option>
           <option>Bedsheets &amp; Towels</option>
@@ -692,13 +692,11 @@ function renderProducts(cat) {
 
   if (!items.length) {
     grid.innerHTML = `<p class="empty-msg">No products found. <a href="https://wa.me/254726729794?text=Hi! I'm looking for ${cat} products." target="_blank" style="color:var(--teal)">Ask us on WhatsApp →</a></p>`;
-    return;
-  }
-
-  grid.className = 'products-grid';
-  grid.innerHTML = items.map(p => {
-    const wa = encodeURIComponent(`Hi! I'm interested in ${p.name}. Please share pricing and availability.`);
-    return `
+  } else {
+    grid.className = 'products-grid';
+    grid.innerHTML = items.map(p => {
+      const wa = encodeURIComponent(`Hi! I'm interested in ${p.name}. Please share pricing and availability.`);
+      return `
     <article class="prod-card" itemscope itemtype="https://schema.org/Product">
       <div class="prod-img">
         <!-- PHOTO: replace div below with <img src="images/${p.cat}/${p.name.toLowerCase().replace(/\s+/g,'-')}.jpg" alt="${p.name} in Nairobi" loading="lazy"/> -->
@@ -723,7 +721,8 @@ function renderProducts(cat) {
         </div>
       </div>
     </article>`;
-  }).join('');
+    }).join('');
+  }
 
   // Attempt to enrich from backend API
   fetch(`/api/products${cat !== 'all' ? '?category='+cat : ''}`)
