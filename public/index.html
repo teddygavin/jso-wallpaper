@@ -431,9 +431,9 @@
 
 <!-- STATS -->
 <div class="stats-bar">
-  <div class="stat-item"><div class="stat-num">500+</div><div class="stat-label">Projects Done</div></div>
-  <div class="stat-item"><div class="stat-num">12</div><div class="stat-label">Years Experience</div></div>
-  <div class="stat-item"><div class="stat-num">2</div><div class="stat-label">Awards Won</div></div>
+  <div class="stat-item"><div class="stat-num" data-count-to="500" data-suffix="+">0</div><div class="stat-label">Projects Done</div></div>
+  <div class="stat-item"><div class="stat-num" data-count-to="12" data-suffix="">0</div><div class="stat-label">Years Experience</div></div>
+  <div class="stat-item"><div class="stat-num" data-count-to="2" data-suffix="">0</div><div class="stat-label">Awards Won</div></div>
 </div>
 
 <!-- ═══ PRODUCTS ═══ -->
@@ -904,5 +904,41 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbo
     .lightbox-imgwrap{min-height:220px;}
   }
 </style>
+
+<script>
+// ── STATS COUNT-UP ANIMATION ──
+(function () {
+  const statNums = document.querySelectorAll('.stat-num[data-count-to]');
+  if (!statNums.length) return;
+
+  function animateCount(el) {
+    const target = parseInt(el.dataset.countTo, 10) || 0;
+    const suffix = el.dataset.suffix || '';
+    const duration = 1400; // ms
+    const start = performance.now();
+
+    function tick(now) {
+      const progress = Math.min((now - start) / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3); // ease-out cubic
+      const current = Math.round(target * eased);
+      el.textContent = current + suffix;
+      if (progress < 1) requestAnimationFrame(tick);
+      else el.textContent = target + suffix;
+    }
+    requestAnimationFrame(tick);
+  }
+
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        animateCount(entry.target);
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.4 });
+
+  statNums.forEach(el => observer.observe(el));
+})();
+</script>
 </body>
 </html>
