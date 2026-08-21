@@ -738,7 +738,7 @@ function renderFromAPI(items) {
       : `<div class="prod-placeholder">📦</div>`;
     const badgeCls = BADGE_CLASS[p.badge] || '';
     return `
-    <article class="prod-card" itemscope itemtype="https://schema.org/Product" onclick="${lbCall}" style="cursor:pointer;">
+    <article class="prod-card" itemscope itemtype="https://schema.org/Product" onclick='${lbCall}' style="cursor:pointer;">
       <div class="prod-img">
         ${imgHtml}
         ${p.badge ? `<span class="prod-badge ${badgeCls}">${p.badge}</span>` : ''}
