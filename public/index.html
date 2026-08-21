@@ -727,37 +727,56 @@ function renderProducts(cat) {
     .catch(() => {/* no API yet — static data already shown */});
 }
 
+let LAST_ITEMS = [];
+function escapeHtml(str) {
+  return String(str ?? '').replace(/[&<>"']/g, ch => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  }[ch]));
+}
 function renderFromAPI(items) {
   if (!items.length) return;
+  LAST_ITEMS = items;
   grid.className = 'products-grid';
-  grid.innerHTML = items.map(p => {
+  grid.innerHTML = items.map((p, idx) => {
     const wa = encodeURIComponent(`Hi! I'm interested in ${p.name}. Please share pricing and availability.`);
-    const lbCall = `openLightbox(${JSON.stringify(p.image||"")}, ${JSON.stringify(p.name)}, ${JSON.stringify(p.description||"")}, ${JSON.stringify(p.price_label||"Contact us")}, ${JSON.stringify(p.unit||"")})`;
+    const safeName = escapeHtml(p.name);
     const imgHtml = p.image
-      ? `<img src="${p.image}" alt="${p.name} Nairobi" loading="lazy"/>`
+      ? `<img src="${escapeHtml(p.image)}" alt="${safeName} Nairobi" loading="lazy"/>`
       : `<div class="prod-placeholder">📦</div>`;
     const badgeCls = BADGE_CLASS[p.badge] || '';
     return `
-    <article class="prod-card" itemscope itemtype="https://schema.org/Product" onclick='${lbCall}' style="cursor:pointer;">
+    <article class="prod-card" itemscope itemtype="https://schema.org/Product" data-idx="${idx}" style="cursor:pointer;">
       <div class="prod-img">
         ${imgHtml}
-        ${p.badge ? `<span class="prod-badge ${badgeCls}">${p.badge}</span>` : ''}
+        ${p.badge ? `<span class="prod-badge ${badgeCls}">${escapeHtml(p.badge)}</span>` : ''}
       </div>
       <div class="prod-info">
-        <div class="prod-cat-lbl">${p.category_slug}</div>
-        <h3 class="prod-name" itemprop="name">${p.name}</h3>
-        <p class="prod-desc" itemprop="description">${p.description || ''}</p>
+        <div class="prod-cat-lbl">${escapeHtml(p.category_slug)}</div>
+        <h3 class="prod-name" itemprop="name">${safeName}</h3>
+        <p class="prod-desc" itemprop="description">${escapeHtml(p.description || '')}</p>
         <div class="prod-row">
           <div>
-            <span class="prod-price">${p.price_label || 'Contact us'}</span>
-            <span class="prod-unit">${p.unit}</span>
+            <span class="prod-price">${escapeHtml(p.price_label || 'Contact us')}</span>
+            <span class="prod-unit">${escapeHtml(p.unit)}</span>
           </div>
-          <a class="prod-order" href="https://wa.me/254726729794?text=${wa}" target="_blank" rel="noopener" onclick="event.stopPropagation()">Order</a>
+          <a class="prod-order" href="https://wa.me/254726729794?text=${wa}" target="_blank" rel="noopener">Order</a>
         </div>
       </div>
     </article>`;
   }).join('');
 }
+
+// Safe click handling — looks up the real product object, never touches
+// raw text inside HTML attributes, so quotes/apostrophes in names or
+// descriptions can never break anything.
+grid.addEventListener('click', e => {
+  if (e.target.closest('.prod-order')) return; // let the Order button work normally
+  const card = e.target.closest('.prod-card[data-idx]');
+  if (!card) return;
+  const p = LAST_ITEMS[Number(card.dataset.idx)];
+  if (!p) return;
+  openLightbox(p.image || '', p.name, p.description || '', p.price_label || 'Contact us', p.unit || '');
+});
 
 /* ── CATEGORY TABS ── */
 document.querySelectorAll('.cat-tab').forEach(tab => {
