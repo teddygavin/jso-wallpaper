@@ -1,12 +1,512 @@
-<!doctype html>
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>JSO Admin Panel</title>
-  <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>JSO Admin — Product Manager</title>
+<meta name="robots" content="noindex, nofollow"/>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --black:#1a1a1a; --white:#fff; --offwhite:#f4f2ee; --mid:#e2ded6;
+    --orange:#c1440e; --teal:#1f6f6b; --danger:#c0392b; --muted:#8a8477;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Inter',sans-serif;background:var(--offwhite);color:var(--black);}
+  h1,h2,h3{font-family:'Playfair Display',serif;}
+  a{color:inherit;}
+  button{font-family:inherit;cursor:pointer;}
+  input,select,textarea{font-family:inherit;font-size:14px;}
+
+  /* ── LOGIN SCREEN ── */
+  #loginScreen{position:fixed;inset:0;background:var(--black);display:flex;
+               align-items:center;justify-content:center;z-index:100;}
+  .login-box{background:var(--white);padding:2.5rem 2rem;border-radius:8px;width:100%;max-width:340px;text-align:center;}
+  .login-box img{height:56px;margin-bottom:1rem;}
+  .login-box h1{font-size:22px;margin-bottom:.35rem;}
+  .login-box p{font-size:13px;color:var(--muted);margin-bottom:1.5rem;}
+  .login-box input{width:100%;padding:.85rem 1rem;border:1px solid var(--mid);border-radius:5px;margin-bottom:.75rem;}
+  .login-box button{width:100%;padding:.85rem 1rem;background:var(--black);color:#fff;border:none;
+                     border-radius:5px;font-weight:600;letter-spacing:.5px;}
+  .login-error{color:var(--danger);font-size:13px;margin-top:.6rem;display:none;}
+
+  /* ── TOP BAR ── */
+  #app{display:none;}
+  .topbar{background:var(--black);color:#fff;padding:1rem 1.5rem;display:flex;
+          align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10;}
+  .topbar h1{font-size:19px;}
+  .topbar .sub{font-size:11px;color:#bbb;letter-spacing:1px;text-transform:uppercase;margin-top:2px;}
+  .logout-btn{background:none;border:1px solid #555;color:#ccc;padding:.5rem 1rem;
+              border-radius:4px;font-size:12px;}
+  .logout-btn:hover{border-color:#fff;color:#fff;}
+
+  /* ── TOOLBAR ── */
+  .toolbar{max-width:1200px;margin:0 auto;padding:1.5rem;display:flex;gap:.75rem;
+           flex-wrap:wrap;align-items:center;}
+  .toolbar select,.toolbar input[type=text]{padding:.65rem .9rem;border:1px solid var(--mid);
+           border-radius:5px;background:#fff;}
+  .toolbar input[type=text]{flex:1;min-width:180px;}
+  .btn-add{margin-left:auto;background:var(--orange);color:#fff;border:none;padding:.7rem 1.3rem;
+           border-radius:5px;font-weight:600;font-size:13px;}
+  .btn-add:hover{background:#a3390c;}
+
+  /* ── PRODUCT GRID ── */
+  .grid{max-width:1200px;margin:0 auto;padding:0 1.5rem 3rem;display:grid;
+        grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:1.1rem;}
+  .card{background:#fff;border-radius:8px;overflow:hidden;border:1px solid var(--mid);
+        display:flex;flex-direction:column;}
+  .card-img{height:150px;background:var(--offwhite);display:flex;align-items:center;
+            justify-content:center;overflow:hidden;position:relative;}
+  .card-img img{width:100%;height:100%;object-fit:cover;}
+  .card-img .noimg{font-size:32px;opacity:.3;}
+  .stock-flag{position:absolute;top:8px;left:8px;background:var(--danger);color:#fff;
+              font-size:10px;padding:3px 8px;border-radius:3px;letter-spacing:.5px;}
+  .card-body{padding:.9rem 1rem;display:flex;flex-direction:column;gap:.35rem;flex:1;}
+  .card-cat{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--teal);font-weight:600;}
+  .card-name{font-size:15px;font-weight:600;line-height:1.3;}
+  .card-price{font-size:15px;color:var(--orange);font-weight:700;}
+  .card-unit{font-size:11px;color:var(--muted);font-weight:400;margin-left:4px;}
+  .card-actions{display:flex;gap:.5rem;margin-top:auto;padding-top:.6rem;}
+  .card-actions button{flex:1;padding:.5rem;border:1px solid var(--mid);background:#fff;
+                        border-radius:4px;font-size:12px;font-weight:600;}
+  .card-actions .edit-btn:hover{background:var(--black);color:#fff;border-color:var(--black);}
+  .card-actions .del-btn{color:var(--danger);border-color:#f0d0cc;}
+  .card-actions .del-btn:hover{background:var(--danger);color:#fff;}
+
+  .empty-state{max-width:1200px;margin:3rem auto;text-align:center;color:var(--muted);}
+
+  /* ── MODAL ── */
+  .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:50;
+                 align-items:flex-start;justify-content:center;padding:2rem 1rem;overflow-y:auto;}
+  .modal-overlay.open{display:flex;}
+  .modal{background:#fff;border-radius:8px;width:100%;max-width:640px;padding:1.75rem;margin-top:1rem;}
+  .modal h2{font-size:20px;margin-bottom:1.25rem;}
+  .field{margin-bottom:1rem;}
+  .field label{display:block;font-size:12px;font-weight:600;margin-bottom:.35rem;color:#555;}
+  .field input,.field select,.field textarea{width:100%;padding:.7rem .85rem;border:1px solid var(--mid);
+           border-radius:5px;}
+  .field textarea{min-height:80px;resize:vertical;}
+  .field-row{display:grid;grid-template-columns:1fr 1fr;gap:1rem;}
+  .checks{display:flex;gap:1.5rem;margin-bottom:1rem;}
+  .checks label{display:flex;align-items:center;gap:.4rem;font-size:13px;}
+  .img-upload{border:2px dashed var(--mid);border-radius:6px;padding:1rem;text-align:center;
+              cursor:pointer;position:relative;margin-bottom:1rem;}
+  .img-upload:hover{border-color:var(--orange);}
+  .img-upload img{max-height:120px;max-width:100%;border-radius:4px;}
+  .img-upload .hint{font-size:12px;color:var(--muted);margin-top:.4rem;}
+  .img-upload input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;}
+  details{margin-bottom:1rem;border:1px solid var(--mid);border-radius:6px;padding:.75rem .9rem;}
+  details summary{font-size:13px;font-weight:600;cursor:pointer;}
+  details .field{margin-top:.9rem;}
+  .modal-actions{display:flex;gap:.75rem;margin-top:1.25rem;}
+  .btn-save{flex:1;background:var(--black);color:#fff;border:none;padding:.85rem;border-radius:5px;font-weight:600;}
+  .btn-cancel{background:#fff;border:1px solid var(--mid);padding:.85rem 1.3rem;border-radius:5px;font-weight:600;}
+  .form-msg{font-size:13px;padding:.6rem .8rem;border-radius:5px;margin-bottom:1rem;display:none;}
+  .form-msg.error{background:#fbeae7;color:var(--danger);display:block;}
+  .form-msg.success{background:#e8f3ea;color:#1e7a35;display:block;}
+
+  .spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.4);
+           border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;vertical-align:-2px;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  @media (max-width:600px){
+    .field-row{grid-template-columns:1fr;}
+    .grid{grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:.75rem;}
+  }
+</style>
 </head>
 <body>
-  <script src="https://unpkg.com/decap-cms@^3.0.0/dist/decap-cms.js"></script>
+
+<!-- ═══ LOGIN ═══ -->
+<div id="loginScreen">
+  <div class="login-box">
+    <img src="https://res.cloudinary.com/daq6eymrg/image/upload/v1786882418/jso_logo_icon_rivnqv.png" alt="JSO"/>
+    <h1>JSO Admin</h1>
+    <p>Enter your admin password to manage products</p>
+    <input type="password" id="passwordInput" placeholder="Admin password" onkeydown="if(event.key==='Enter')login()"/>
+    <button onclick="login()">Log In</button>
+    <div class="login-error" id="loginError">Incorrect password. Please try again.</div>
+  </div>
+</div>
+
+<!-- ═══ APP ═══ -->
+<div id="app">
+  <div class="topbar">
+    <div>
+      <h1>JSO Product Manager</h1>
+      <div class="sub">J.S.O Wallpaper &amp; Interiors</div>
+    </div>
+    <button class="logout-btn" onclick="logout()">Log Out</button>
+  </div>
+
+  <div class="toolbar">
+    <select id="categoryFilter" onchange="loadProducts()">
+      <option value="">All Categories</option>
+    </select>
+    <input type="text" id="searchInput" placeholder="Search products..." oninput="debouncedSearch()"/>
+    <button class="btn-add" onclick="openForm()">+ Add Product</button>
+  </div>
+
+  <div class="grid" id="productGrid"></div>
+  <div class="empty-state" id="emptyState" style="display:none;">No products found.</div>
+</div>
+
+<!-- ═══ ADD/EDIT MODAL ═══ -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <h2 id="modalTitle">Add Product</h2>
+    <div class="form-msg" id="formMsg"></div>
+
+    <div class="img-upload" id="imgUploadBox" onclick="document.getElementById('fileInput').click()">
+      <div id="imgPreviewWrap">
+        <div style="font-size:32px;opacity:.35;">📷</div>
+        <div class="hint">Click to upload a photo</div>
+      </div>
+      <input type="file" id="fileInput" accept="image/*" onchange="handleFileSelect(event)"/>
+    </div>
+
+    <div class="field">
+      <label>Product Name *</label>
+      <input type="text" id="f_name" placeholder="e.g. Arabesque Coral Wallpaper"/>
+    </div>
+
+    <div class="field">
+      <label>Category *</label>
+      <select id="f_category"></select>
+    </div>
+
+    <div class="field">
+      <label>Description</label>
+      <textarea id="f_description" placeholder="Product description..."></textarea>
+    </div>
+
+    <div class="field-row">
+      <div class="field">
+        <label>Price (numbers only)</label>
+        <input type="number" id="f_price" placeholder="1500" oninput="autoPriceLabel()"/>
+      </div>
+      <div class="field">
+        <label>Price Label</label>
+        <input type="text" id="f_price_label" placeholder="KSh 1,500"/>
+      </div>
+    </div>
+
+    <div class="field-row">
+      <div class="field">
+        <label>Unit</label>
+        <input type="text" id="f_unit" placeholder="per roll"/>
+      </div>
+      <div class="field">
+        <label>Badge</label>
+        <select id="f_badge">
+          <option value="">None</option>
+          <option value="New">New</option>
+          <option value="Bestseller">Bestseller</option>
+          <option value="Popular">Popular</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="checks">
+      <label><input type="checkbox" id="f_in_stock" checked/> In Stock</label>
+      <label><input type="checkbox" id="f_featured"/> Featured</label>
+    </div>
+
+    <details>
+      <summary>SEO Details (optional)</summary>
+      <div class="field">
+        <label>SEO Title</label>
+        <input type="text" id="f_seo_title" placeholder="Product Name Nairobi | Category Kenya"/>
+      </div>
+      <div class="field">
+        <label>SEO Description</label>
+        <textarea id="f_seo_desc" placeholder="Shop... in Nairobi..."></textarea>
+      </div>
+      <div class="field">
+        <label>SEO Keywords (comma separated)</label>
+        <textarea id="f_seo_keywords" placeholder="keyword nairobi, keyword kenya, ..."></textarea>
+      </div>
+    </details>
+
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeForm()">Cancel</button>
+      <button class="btn-save" id="saveBtn" onclick="saveProduct()">Save Product</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const API_BASE = window.location.origin;
+let adminPassword = '';
+let categories = [];
+let editingId = null;
+let uploadedImageUrl = null;
+let searchTimer = null;
+
+/* ═══ AUTH ═══ */
+window.addEventListener('DOMContentLoaded', () => {
+  const saved = sessionStorage.getItem('jso_admin_pw');
+  if (saved) { adminPassword = saved; enterApp(); }
+});
+
+function login() {
+  const pw = document.getElementById('passwordInput').value.trim();
+  if (!pw) return;
+  adminPassword = pw;
+  sessionStorage.setItem('jso_admin_pw', pw);
+  document.getElementById('loginError').style.display = 'none';
+  enterApp();
+}
+
+function logout() {
+  sessionStorage.removeItem('jso_admin_pw');
+  adminPassword = '';
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('loginScreen').style.display = 'flex';
+  document.getElementById('passwordInput').value = '';
+}
+
+async function enterApp() {
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  await loadCategories();
+  await loadProducts();
+}
+
+/* ═══ CATEGORIES ═══ */
+async function loadCategories() {
+  try {
+    const res = await fetch(`${API_BASE}/api/categories`);
+    const data = await res.json();
+    categories = data.data || [];
+    const filterSel = document.getElementById('categoryFilter');
+    const formSel = document.getElementById('f_category');
+    filterSel.innerHTML = '<option value="">All Categories</option>' +
+      categories.map(c => `<option value="${escAttr(c.slug)}">${escHtml(c.name)}</option>`).join('');
+    formSel.innerHTML = categories.map(c => `<option value="${escAttr(c.slug)}">${escHtml(c.name)}</option>`).join('');
+  } catch (err) {
+    console.error('Failed to load categories', err);
+  }
+}
+
+/* ═══ PRODUCTS LIST ═══ */
+async function loadProducts() {
+  const grid = document.getElementById('productGrid');
+  const empty = document.getElementById('emptyState');
+  grid.innerHTML = '<p style="grid-column:1/-1;color:#999;padding:2rem 0;">Loading...</p>';
+  empty.style.display = 'none';
+
+  const cat = document.getElementById('categoryFilter').value;
+  const search = document.getElementById('searchInput').value.trim();
+  let url = `${API_BASE}/api/products?limit=200`;
+  if (cat) url += `&category=${encodeURIComponent(cat)}`;
+  if (search) url += `&search=${encodeURIComponent(search)}`;
+
+  try {
+    const res = await fetch(url);
+    const data = await res.json();
+    const items = data.data || [];
+
+    if (!items.length) {
+      grid.innerHTML = '';
+      empty.style.display = 'block';
+      return;
+    }
+
+    grid.innerHTML = items.map(p => `
+      <div class="card">
+        <div class="card-img">
+          ${p.image ? `<img src="${escAttr(p.image)}" alt="${escAttr(p.name)}"/>` : `<div class="noimg">📦</div>`}
+          ${!p.in_stock ? `<span class="stock-flag">Out of Stock</span>` : ''}
+        </div>
+        <div class="card-body">
+          <div class="card-cat">${escHtml(p.category_slug || '')}</div>
+          <div class="card-name">${escHtml(p.name)}</div>
+          <div class="card-price">${escHtml(p.price_label || 'Contact us')}<span class="card-unit">${escHtml(p.unit || '')}</span></div>
+          <div class="card-actions">
+            <button class="edit-btn" data-id="${p.id}">Edit</button>
+            <button class="del-btn" data-id="${p.id}" data-name="${escAttr(p.name)}">Delete</button>
+          </div>
+        </div>
+      </div>
+    `).join('');
+
+    // Safe event delegation — no inline handlers with product text
+    grid.querySelectorAll('.edit-btn').forEach(btn =>
+      btn.addEventListener('click', () => openForm(items.find(p => p.id == btn.dataset.id))));
+    grid.querySelectorAll('.del-btn').forEach(btn =>
+      btn.addEventListener('click', () => deleteProduct(btn.dataset.id, btn.dataset.name)));
+
+  } catch (err) {
+    grid.innerHTML = '<p style="grid-column:1/-1;color:#c0392b;">Failed to load products.</p>';
+    console.error(err);
+  }
+}
+
+function debouncedSearch() {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(loadProducts, 400);
+}
+
+/* ═══ ADD / EDIT FORM ═══ */
+function openForm(product = null) {
+  editingId = product ? product.id : null;
+  uploadedImageUrl = product ? (product.image || null) : null;
+  document.getElementById('modalTitle').textContent = product ? 'Edit Product' : 'Add Product';
+  document.getElementById('formMsg').style.display = 'none';
+
+  document.getElementById('f_name').value = product?.name || '';
+  document.getElementById('f_category').value = product?.category_slug || (categories[0]?.slug || '');
+  document.getElementById('f_description').value = product?.description || '';
+  document.getElementById('f_price').value = product?.price || '';
+  document.getElementById('f_price_label').value = product?.price_label || '';
+  document.getElementById('f_unit').value = product?.unit || 'per item';
+  document.getElementById('f_badge').value = product?.badge || '';
+  document.getElementById('f_in_stock').checked = product ? !!product.in_stock : true;
+  document.getElementById('f_featured').checked = product ? !!product.featured : false;
+  document.getElementById('f_seo_title').value = product?.seo_title || '';
+  document.getElementById('f_seo_desc').value = product?.seo_desc || '';
+  document.getElementById('f_seo_keywords').value = product?.seo_keywords || '';
+
+  const previewWrap = document.getElementById('imgPreviewWrap');
+  previewWrap.innerHTML = uploadedImageUrl
+    ? `<img src="${escAttr(uploadedImageUrl)}" alt="preview"/><div class="hint">Click to change photo</div>`
+    : `<div style="font-size:32px;opacity:.35;">📷</div><div class="hint">Click to upload a photo</div>`;
+
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function closeForm() {
+  document.getElementById('modalOverlay').classList.remove('open');
+}
+
+function autoPriceLabel() {
+  const price = document.getElementById('f_price').value;
+  const labelField = document.getElementById('f_price_label');
+  if (price && !labelField.dataset.manuallyEdited) {
+    labelField.value = 'KSh ' + Number(price).toLocaleString();
+  }
+}
+document.addEventListener('DOMContentLoaded', () => {
+  const labelField = document.getElementById('f_price_label');
+  if (labelField) labelField.addEventListener('input', () => labelField.dataset.manuallyEdited = '1');
+});
+
+/* ═══ IMAGE UPLOAD ═══ */
+function handleFileSelect(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const previewWrap = document.getElementById('imgPreviewWrap');
+  previewWrap.innerHTML = '<div class="hint"><span class="spinner" style="border-color:rgba(0,0,0,.2);border-top-color:#c1440e;"></span> Uploading...</div>';
+
+  const reader = new FileReader();
+  reader.onload = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/api/upload`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Admin-Password': adminPassword },
+        body: JSON.stringify({ image: reader.result, folder: 'jso_products' })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Upload failed');
+
+      uploadedImageUrl = data.url;
+      previewWrap.innerHTML = `<img src="${escAttr(uploadedImageUrl)}" alt="preview"/><div class="hint">Click to change photo</div>`;
+    } catch (err) {
+      previewWrap.innerHTML = `<div style="font-size:32px;opacity:.35;">📷</div><div class="hint" style="color:#c0392b;">Upload failed — click to retry</div>`;
+      console.error(err);
+    }
+  };
+  reader.readAsDataURL(file);
+}
+
+/* ═══ SAVE (create or update) ═══ */
+async function saveProduct() {
+  const msg = document.getElementById('formMsg');
+  const saveBtn = document.getElementById('saveBtn');
+  const name = document.getElementById('f_name').value.trim();
+  const category_slug = document.getElementById('f_category').value;
+
+  if (!name || !category_slug) {
+    msg.textContent = 'Product name and category are required.';
+    msg.className = 'form-msg error';
+    return;
+  }
+
+  const payload = {
+    name,
+    category_slug,
+    description: document.getElementById('f_description').value.trim(),
+    price: document.getElementById('f_price').value ? Number(document.getElementById('f_price').value) : null,
+    price_label: document.getElementById('f_price_label').value.trim(),
+    unit: document.getElementById('f_unit').value.trim() || 'per item',
+    image: uploadedImageUrl,
+    badge: document.getElementById('f_badge').value || null,
+    in_stock: document.getElementById('f_in_stock').checked ? 1 : 0,
+    featured: document.getElementById('f_featured').checked ? 1 : 0,
+    seo_title: document.getElementById('f_seo_title').value.trim(),
+    seo_desc: document.getElementById('f_seo_desc').value.trim(),
+    seo_keywords: document.getElementById('f_seo_keywords').value.trim(),
+  };
+
+  saveBtn.disabled = true;
+  saveBtn.innerHTML = '<span class="spinner"></span> Saving...';
+  msg.style.display = 'none';
+
+  try {
+    const url = editingId ? `${API_BASE}/api/products?id=${editingId}` : `${API_BASE}/api/products`;
+    const method = editingId ? 'PUT' : 'POST';
+    const res = await fetch(url, {
+      method,
+      headers: { 'Content-Type': 'application/json', 'X-Admin-Password': adminPassword },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      if (res.status === 401) throw new Error('Incorrect admin password. Please log out and back in.');
+      throw new Error(data.error || 'Save failed');
+    }
+
+    closeForm();
+    loadProducts();
+
+  } catch (err) {
+    msg.textContent = err.message;
+    msg.className = 'form-msg error';
+  } finally {
+    saveBtn.disabled = false;
+    saveBtn.textContent = 'Save Product';
+  }
+}
+
+/* ═══ DELETE ═══ */
+async function deleteProduct(id, name) {
+  if (!confirm(`Delete "${name}"? This cannot be undone.`)) return;
+  try {
+    const res = await fetch(`${API_BASE}/api/products?id=${id}`, {
+      method: 'DELETE',
+      headers: { 'X-Admin-Password': adminPassword }
+    });
+    if (!res.ok) {
+      const data = await res.json();
+      throw new Error(data.error || 'Delete failed');
+    }
+    loadProducts();
+  } catch (err) {
+    alert('Failed to delete: ' + err.message);
+  }
+}
+
+/* ═══ HTML ESCAPING HELPERS (prevents broken markup from quotes/special chars) ═══ */
+function escHtml(str) {
+  return String(str ?? '').replace(/[&<>"']/g, ch => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[ch]));
+}
+function escAttr(str) { return escHtml(str); }
+</script>
 </body>
 </html>
